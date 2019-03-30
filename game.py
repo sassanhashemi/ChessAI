@@ -45,8 +45,20 @@ MAXVAL = 100000
 MAXDEPTH = 4
 
 
-model = tf.keras.models.load_model(
-    filepath="model.txt",
+evaluate = tf.keras.models.load_model(
+    filepath="models/evaluate",
+    custom_objects=None,
+    compile=True
+)
+
+move_from = tf.keras.models.load_model(
+    filepath="models/move_from",
+    custom_objects=None,
+    compile=True
+)
+
+move_to = tf.keras.models.load_model(
+    filepath="models/move_to",
     custom_objects=None,
     compile=True
 )
@@ -57,6 +69,8 @@ def get_x_data(unicode):
     for char in unicode:
         if char in valid_pieces_nn:
             x_data[row, pieces[char]] = 1
+        if char in valid_pieces:
+            row += 1
 
     return x_data
 
@@ -112,12 +126,12 @@ def material_value(board):
 
 def neural_net_value(board):
     input = np.array([get_x_data(board.unicode())])
-    output = model.predict(input).flatten()
+    output = evaluate.predict(input).flatten()
     value = output[0]-output[1]
     return value
 
 def value(board):
-    return material_value(board)/100 + neural_net_value(board)
+    return neural_net_value(board)*100 + material_value(board)
 
 
 def minimax(board, depth, a, b, last_move):
@@ -173,13 +187,34 @@ class Game:
     def __init__(self):
         self.board = chess.Board()
 
+    def get_best_move(self):
+        input = np.array([get_x_data(self.board.unicode())])
+
+        start_raw = np.array(move_from.__call__(input)).flatten()
+        end_raw = np.array(move_to.__call__(input)).flatten()
+
+        start = np.argsort(start_raw)
+        end = np.argsort(end_raw)
+
+        moves = []
+        scores = []
+        for i in range(64):
+            for j in range(64):
+                move = chess.Move(start[i], end[j])
+                if move in self.board.legal_moves:
+                    moves.append(move)
+                    scores.append(i + j)
+        best = np.argmax(np.array(scores))
+        return moves[best]
+
 
     def play(self):
         while (not self.board.is_game_over()):
             print(self.board.unicode())
-            best_move = minimax(board=self.board, depth=0, a=-MAXVAL, b=MAXVAL, last_move=None)
-            print("Engine move: %s" %(self.board.san(best_move[1])))
-            print("Engine evaluation:", round(best_move[0], 3))
+            #best_move = minimax(board=self.board, depth=0, a=-MAXVAL, b=MAXVAL, last_move=None)
+            #print("Engine evaluation:", round(best_move[0], 5))
+            best_move = self.get_best_move()
+            print("Engine move: %s" %(self.board.san(best_move)))
 
             valid_move = False
             while (not valid_move):
@@ -193,15 +228,8 @@ class Game:
             self.board.push(new_move)
 
 
-"""
-pgn = open("dataset/2017.pgn")
-game = chess.pgn.read_game(pgn)
-board = game.board()
-for move in game.mainline_moves():
-    board.push(move)
-    print(board.unicode())
-    print("Evaluation: ", neural_net_value(board))
-"""
+
 
 game = Game()
+#game.get_best_move()
 game.play()

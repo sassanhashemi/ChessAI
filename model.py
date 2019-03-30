@@ -4,14 +4,15 @@ import chess.pgn
 import numpy as np
 import os
 
+
 # Just disables the warning, doesn't enable AVX/FMA
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 # Define Variables
-NUM_TRAINING_GAMES = 200
-NUM_TESTING_GAMES = 10
-DATA = "dataset/2018.pgn"
+NUM_TRAINING_GAMES = 300
+NUM_TESTING_GAMES = 100
+DATA = "dataset/2010.pgn"
 
 
 
@@ -66,54 +67,92 @@ def get_games(file=DATA, num_games=1):
 
 def get_training_data(games):
     x_train = []
-    y_train = []
+    y_train_from = []
+    y_train_to = []
     for game in games:
         board = game.board()
         result = get_result(game.headers["Result"])
         for move in game.mainline_moves():
-            board.push(move)
             x_train.append(get_x_data(board.unicode()))
-            y_train.append(result)
-    return np.array(x_train).reshape(-1, 64, 12), np.array(y_train).reshape(-1)
+            board.push(move)
+            y_train_from.append(move.from_square)
+            y_train_to.append(move.to_square)
+    return np.array(x_train).reshape(-1, 64, 12), np.array(y_train_from).reshape(-1), np.array(y_train_to).reshape(-1)
 
 
 train_games = get_games(num_games=NUM_TRAINING_GAMES)
 test_games = get_games(num_games=NUM_TESTING_GAMES)
-x_train, y_train = get_training_data(train_games)
-x_test, y_test = get_training_data(test_games)
-
+x_train, y_train_from, y_train_to = get_training_data(train_games)
+x_test, y_test_from, y_test_to = get_training_data(test_games)
 
 
 """
-evaluate = tf.keras.models.Sequential([
+
+move_from = tf.keras.models.Sequential([
     tf.keras.layers.Flatten(input_shape=(64, 12)),
     tf.keras.layers.Dense(128, activation='relu'),
     tf.keras.layers.Dense(128, activation='relu'),
+    #tf.keras.layers.Dropout(0.2),
     tf.keras.layers.Dense(1024, activation='relu'),
     tf.keras.layers.Dense(1024, activation='relu'),
-    tf.keras.layers.Dense(3, activation='softmax')
+    tf.keras.layers.Dense(64, activation='softmax')
 ])
+
+move_to = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(64, 12)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(128, activation='relu'),
+    #tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(1024, activation='relu'),
+    tf.keras.layers.Dense(1024, activation='relu'),
+    tf.keras.layers.Dense(64, activation='softmax')
+])
+
 """
 
-evaluate = tf.keras.models.load_model(
-    filepath="models/evaluate",
+move_from = tf.keras.models.load_model(
+    filepath="models/move_from",
+    custom_objects=None,
+    compile=True
+)
+
+
+move_to = tf.keras.models.load_model(
+    filepath="models/move_to",
     custom_objects=None,
     compile=True
 )
 
 
 
-evaluate.compile(optimizer='adam',
+move_from.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 
-evaluate.fit(x_train, y_train, epochs=10)
-evaluate.evaluate(x_test, y_test)
+move_from.fit(x_train, y_train_from, epochs=10)
+move_from.evaluate(x_test, y_test_from)
+
+
+move_to.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+move_to.fit(x_train, y_train_to, epochs=10)
+move_to.evaluate(x_test, y_test_to)
+
+
 
 
 tf.keras.models.save_model(
-    model=evaluate,
-    filepath="models/evaluate",
+    model=move_from,
+    filepath="models/move_from",
+    overwrite=True,
+    include_optimizer=True
+)
+
+tf.keras.models.save_model(
+    model=move_to,
+    filepath="models/move_to",
     overwrite=True,
     include_optimizer=True
 )
