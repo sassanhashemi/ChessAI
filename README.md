@@ -12,6 +12,10 @@ A command line game of chess with a built in engine
 3. 'pip install numpy'
 4. 'pip install python-chess'
 
+## Functionality
+1. 'git clone git@github.com:sassanhashemi/ChessAI.git'
+2. 'python ChessAi/src/play.py'
+
 
 ## Contributing
 
