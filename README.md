@@ -8,13 +8,13 @@ A command line game of chess with a built in engine
 ## Installation
 
 1. Install Python 3.7
-2. 'pip install tensorflow==2.0.0-alpha0
-3. 'pip install numpy'
-4. 'pip install python-chess'
+2. `pip install tensorflow==2.0.0-alpha0`
+3. `pip install numpy`
+4. `pip install python-chess`
 
 ## Functionality
-1. 'git clone git@github.com:sassanhashemi/ChessAI.git'
-2. 'python ChessAi/src/play.py'
+1. `git clone git@github.com:sassanhashemi/ChessAI.git`
+2. `python ChessAi/src/play.py`
 
 
 ## Contributing
