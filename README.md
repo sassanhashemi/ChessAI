@@ -14,7 +14,8 @@ A command line game of chess with a built in engine
 
 ## Functionality
 1. `git clone git@github.com:sassanhashemi/ChessAI.git`
-2. `python ChessAi/src/play.py`
+2. `cd ChessAI/src`
+3. `python play.py`
 
 
 ## Contributing
