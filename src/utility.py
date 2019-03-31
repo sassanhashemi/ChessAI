@@ -48,13 +48,14 @@ valid_pieces_nn = ["♔", "♕", "♖", "♗", "♘", "♙",
                    "♚", "♛", "♜", "♝", "♞", "♟", "·"]
 
 # Define Variables
-NUM_TRAINING_GAMES = 200
-NUM_TESTING_GAMES = 10
-DATA = "../dataset/2018.pgn"
+NUM_TRAINING_GAMES = 1000
+NUM_TESTING_GAMES = 100
+DATA = "../dataset/2017.pgn"
 MAXVAL = 1000000
 MAXDEPTH = 4
 
 # Neural network models
+
 evaluate = tf.keras.models.load_model(
     filepath="../models/evaluate",
     custom_objects=None,
